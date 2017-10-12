@@ -75,15 +75,16 @@ class PixivSpider(object):
             soup = BeautifulSoup(page.text, 'lxml')
             try:
                 originimgurl = soup.find('img', class_="original-image")['data-src']
+                head = self.head4Pic
+                head['referer'] = head['referer'] + ID
+                pic = requests.get(originimgurl, headers=head)
+                with open(self.path + ID + '.jpg', 'wb') as f:
+                    f.write(pic.content)
+                print("Succeed With " + ID)
             except:
                 print('非单一插图 '+ID)
                 # TODO
-            head = self.head4Pic
-            head['referer'] = head['referer'] + ID
-            pic = requests.get(originimgurl, headers=head)
-            with open(self.path + ID + '.jpg', 'wb') as f:
-                f.write(pic.content)
-            print("Succeed With " + ID)
+
 
 
 Username = input('输入用户名\n')
