@@ -32,11 +32,13 @@ class PixivSpider(object):
 
     url4Page = "https://www.pixiv.net/member_illust.php?mode=medium&illust_id="
 
+    url4Manga = "https://www.pixiv.net/member_illust.php?mode=manga&illust_id="
+
     head4Pic = {
         'accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
         'accept-encoding': 'gzip, deflate, br',
         'accept-language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4,en-US;q=0.2',
-        'referer': 'https://www.pixiv.net/member_illust.php?mode=medium&illust_id=',
+        'referer': '',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
     }
 
@@ -75,15 +77,28 @@ class PixivSpider(object):
             soup = BeautifulSoup(page.text, 'lxml')
             try:
                 originimgurl = soup.find('img', class_="original-image")['data-src']
-                head = self.head4Pic
-                head['referer'] = head['referer'] + ID
-                pic = requests.get(originimgurl, headers=head)
+                header = self.head4Pic
+                header['referer'] = self.url4Page + ID
+                pic = requests.get(originimgurl, headers=header)
                 with open(self.path + ID + '.jpg', 'wb') as f:
                     f.write(pic.content)
                 print("Succeed With " + ID)
             except:
-                print('非单一插图 '+ID)
-                # TODO
+                mangaList = []
+                manga = self.rq.request("GET", url=self.url4Manga + ID, headers=self.head)
+                soup = BeautifulSoup(manga.text, 'lxml')
+                for item in soup.find_all('img',class_="image ui-scroll-view"):
+                    mangaList.append(item['data-src'])
+                header = self.head4Pic
+                header['referer'] = self.url4Manga + ID
+                for picture in mangaList :
+                    pic = requests.get(picture, headers=header)
+                    with open(self.path + ID + '_p' + str(mangaList.index(picture)) + '.jpg', 'wb') as f:
+                        f.write(pic.content)
+                print("Succeed With " + ID + "(Manga)")
+
+        print("Done Successfully!")
+
 
 
 
