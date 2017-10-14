@@ -73,9 +73,8 @@ class PixivSpider(object):
         self.get_id()
 
     @threads(8)
-    def download_One(self,originimgurl,header):
-        return requests.get(originimgurl,headers=header)
-
+    def download_One(self,originimgurl,headers):
+        return requests.get(originimgurl,headers=headers)
 
     def get_pic(self):
         for ID in self.dataIDlist:
@@ -86,7 +85,7 @@ class PixivSpider(object):
                 originimgurl = soup.find('img', class_="original-image")['data-src']
                 header = self.head4Pic
                 header['referer'] = self.url4Page + ID
-                pic = self.download_One(originimgurl, header)
+                pic = self.download_One(originimgurl, headers=header)
                 with open(self.path + ID + '.jpg', 'wb') as f:
                     f.write(pic.content)
                 print("Succeed With " + ID)
@@ -99,7 +98,7 @@ class PixivSpider(object):
                 header = self.head4Pic
                 header['referer'] = self.url4Manga + ID
                 for picture in mangaList :
-                    pic = self.download_One(picture, header)
+                    pic = self.download_One(picture, headers=header)
                     with open(self.path + ID + '_p' + str(mangaList.index(picture)) + '.jpg', 'wb') as f:
                         f.write(pic.content)
                 print("Succeed With " + ID + "(Manga)")
@@ -111,7 +110,8 @@ class PixivSpider(object):
 
 Username = input('输入用户名\n')
 Password = input('输入密码\n')
-Path = input('输入希望保存的路径(以\\或/结尾)(Windows系统记得用双反斜杠)')
+Path = input('输入希望保存的路径(以\\或/结尾)(Windows系统记得用双反斜杠)\n')
 
 ps = PixivSpider(Username, Password, Path)
+ps.pre()
 ps.get_pic()
