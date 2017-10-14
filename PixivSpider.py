@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import time
-
+from tomorrow import threads
 
 class PixivSpider(object):
     url4GetLogIn = 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index'
@@ -68,9 +68,16 @@ class PixivSpider(object):
             self.dataIDlist.append(item['data-id'])
         print(self.dataIDlist)
 
-    def get_pic(self):
+    def pre(self):
         self.log_in()
         self.get_id()
+
+    @threads(8)
+    def download_One(self,originimgurl,header):
+        return requests.get(originimgurl,headers=header)
+
+
+    def get_pic(self):
         for ID in self.dataIDlist:
             time.sleep(2)
             page = self.rq.request("GET", url=self.url4Page + ID, headers=self.head)
@@ -79,7 +86,7 @@ class PixivSpider(object):
                 originimgurl = soup.find('img', class_="original-image")['data-src']
                 header = self.head4Pic
                 header['referer'] = self.url4Page + ID
-                pic = requests.get(originimgurl, headers=header)
+                pic = self.download_One(originimgurl, header)
                 with open(self.path + ID + '.jpg', 'wb') as f:
                     f.write(pic.content)
                 print("Succeed With " + ID)
@@ -92,7 +99,7 @@ class PixivSpider(object):
                 header = self.head4Pic
                 header['referer'] = self.url4Manga + ID
                 for picture in mangaList :
-                    pic = requests.get(picture, headers=header)
+                    pic = self.download_One(picture, header)
                     with open(self.path + ID + '_p' + str(mangaList.index(picture)) + '.jpg', 'wb') as f:
                         f.write(pic.content)
                 print("Succeed With " + ID + "(Manga)")
