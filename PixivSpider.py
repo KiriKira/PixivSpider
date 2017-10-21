@@ -3,6 +3,7 @@ import requests
 import re
 import time
 from tomorrow import threads
+import threading
 
 class PixivSpider(object):
     url4GetLogIn = 'https://accounts.pixiv.net/login?lang=zh&source=pc&view_type=page&ref=wwwtop_accounts_index'
@@ -67,6 +68,7 @@ class PixivSpider(object):
         for item in bs.find_all('section', class_="ranking-item"):
             self.dataIDlist.append(item['data-id'])
         print(self.dataIDlist)
+        self.dataIDlist.reverse()
 
     def pre(self):
         self.log_in()
@@ -76,8 +78,11 @@ class PixivSpider(object):
     def download_One(self,originimgurl,headers):
         return requests.get(originimgurl,headers=headers)
 
-    def get_pic(self):
-        for ID in self.dataIDlist:
+    def get_pic4thread(self):
+        while True:
+            ID = self.dataIDlist.pop()
+            if ID == None:
+                break
             time.sleep(2)
             page = self.rq.request("GET", url=self.url4Page + ID, headers=self.head)
             soup = BeautifulSoup(page.text, 'lxml')
@@ -105,7 +110,10 @@ class PixivSpider(object):
 
         print("Done Successfully!")
 
-
+    def get_pic(self):
+        pic_threads = [threading.Thread(target=self.get_pic4thread()) for i in range(5)]
+        for t in pic_threads:
+            t.start()
 
 
 Username = input('输入用户名\n')
