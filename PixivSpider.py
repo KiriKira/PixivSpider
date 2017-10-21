@@ -43,7 +43,8 @@ class PixivSpider(object):
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
     }
 
-    head = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
+    head = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'}
 
     def __init__(self, Username, Password, Path):
         self.username = Username
@@ -55,15 +56,18 @@ class PixivSpider(object):
         self.dataIDlist = []
 
     def log_in(self):
-        res = self.rq.request('GET', url=self.url4GetLogIn, params=self.param4GetLogIn, headers=self.head)
+        res = self.rq.request('GET', url=self.url4GetLogIn,
+                              params=self.param4GetLogIn, headers=self.head)
         pattern = re.compile(r'name="post_key" value="(.*?)">')
         r = pattern.findall(res.text)
         self.datas4LogIn['post_key'] = r[0]
 
-        self.rq.request('POST', url=self.url4LogIn, data=self.datas4LogIn, headers=self.head)
+        self.rq.request('POST', url=self.url4LogIn,
+                        data=self.datas4LogIn, headers=self.head)
 
     def get_id(self):
-        result = self.rq.request('GET', url=self.url4Daily, params=self.param4Daily, headers=self.head)
+        result = self.rq.request(
+            'GET', url=self.url4Daily, params=self.param4Daily, headers=self.head)
         bs = BeautifulSoup(result.text, 'lxml')
         for item in bs.find_all('section', class_="ranking-item"):
             self.dataIDlist.append(item['data-id'])
@@ -75,6 +79,7 @@ class PixivSpider(object):
         self.get_id()
 
     @threads(8)
+<<<<<<< HEAD
     def download_One(self,originimgurl,headers):
         return requests.get(originimgurl,headers=headers)
 
@@ -82,12 +87,23 @@ class PixivSpider(object):
         while True:
             ID = self.dataIDlist.pop()
             if ID == None:
+=======
+    def download_One(self, originimgurl, headers):
+        return requests.get(originimgurl, headers=headers)
+
+    def get_pic4thread(self):
+        while(True):
+            ID = self.dataIDlist.pop(self.dataIDlist[0])
+            if ID == None :
+>>>>>>> 58cb225a6648414f0c733c8661ee78cdf2d17a58
                 break
             time.sleep(2)
-            page = self.rq.request("GET", url=self.url4Page + ID, headers=self.head)
+            page = self.rq.request(
+                "GET", url=self.url4Page + ID, headers=self.head)
             soup = BeautifulSoup(page.text, 'lxml')
             try:
-                originimgurl = soup.find('img', class_="original-image")['data-src']
+                originimgurl = soup.find(
+                    'img', class_="original-image")['data-src']
                 header = self.head4Pic
                 header['referer'] = self.url4Page + ID
                 pic = self.download_One(originimgurl, headers=header)
@@ -96,19 +112,24 @@ class PixivSpider(object):
                 print("Succeed With " + ID)
             except:
                 mangaList = []
-                manga = self.rq.request("GET", url=self.url4Manga + ID, headers=self.head)
+                manga = self.rq.request(
+                    "GET", url=self.url4Manga + ID, headers=self.head)
                 soup = BeautifulSoup(manga.text, 'lxml')
-                for item in soup.find_all('img',class_="image ui-scroll-view"):
+                for item in soup.find_all('img', class_="image ui-scroll-view"):
                     mangaList.append(item['data-src'])
                 header = self.head4Pic
                 header['referer'] = self.url4Manga + ID
-                for picture in mangaList :
+                for picture in mangaList:
                     pic = self.download_One(picture, headers=header)
                     with open(self.path + ID + '_p' + str(mangaList.index(picture)) + '.jpg', 'wb') as f:
                         f.write(pic.content)
                 print("Succeed With " + ID + "(Manga)")
 
-        print("Done Successfully!")
+    def get_pic(self):
+        pic_threads = [threading.Thread(target=self.get_pic4thread) for i in range(8)]
+        for thread in pic_threads :
+            thread.start()
+
 
     def get_pic(self):
         pic_threads = [threading.Thread(target=self.get_pic4thread()) for i in range(5)]
