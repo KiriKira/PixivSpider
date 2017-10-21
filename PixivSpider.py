@@ -79,15 +79,6 @@ class PixivSpider(object):
         self.get_id()
 
     @threads(8)
-<<<<<<< HEAD
-    def download_One(self,originimgurl,headers):
-        return requests.get(originimgurl,headers=headers)
-
-    def get_pic4thread(self):
-        while True:
-            ID = self.dataIDlist.pop()
-            if ID == None:
-=======
     def download_One(self, originimgurl, headers):
         return requests.get(originimgurl, headers=headers)
 
@@ -95,7 +86,6 @@ class PixivSpider(object):
         while(True):
             ID = self.dataIDlist.pop(self.dataIDlist[0])
             if ID == None :
->>>>>>> 58cb225a6648414f0c733c8661ee78cdf2d17a58
                 break
             time.sleep(2)
             page = self.rq.request(
